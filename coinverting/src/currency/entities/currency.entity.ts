@@ -1,1 +1,16 @@
-export class Currency {}
+import { PrimaryGeneratedColumn, Column, Entity } from 'typeorm';
+
+@Entity()
+export class Currency {
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Column({ unique: true })
+    code: string;
+
+    @Column('decimal')
+    exchangeRateToUSD: number;
+
+    @Column({ default: false })
+    isFictional: boolean;
+}
