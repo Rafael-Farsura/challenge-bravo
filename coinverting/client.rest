@@ -7,12 +7,8 @@ GET {{baseURL}}/currency/
 Accept: application/application/json
 
 ### @name AddCurrency
-GET {{baseURL}}/currency/find
+GET {{baseURL}}/currency/find?currency=USD
 Content-Type: application/json
-
-{
-  "currency": "BBB"
-}
 
 
 ### @name Convert

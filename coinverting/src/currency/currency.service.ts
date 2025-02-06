@@ -82,8 +82,6 @@ export class CurrencyService {
         currencyCode: string,
         isAddMethod?: boolean,
     ): Promise<boolean> {
-        console.error(currencyCode);
-
         return Promise.resolve(
             (await this.findOneCurrency(currencyCode, isAddMethod))
                 ? true
@@ -108,22 +106,30 @@ export class CurrencyService {
     }
 
     async convert(convertCurrencyDto: ConvertCurrencyDto) {
-        const { from, to, amount } = convertCurrencyDto;
+        try {
+            const { from, to, amount } = convertCurrencyDto;
 
-        const [currencyFromInUSD, currencyToInUSD] = await Promise.all([
-            this.getValueInUSD(from),
-            this.getValueInUSD(to),
-        ]);
+            const [currencyFromInUSD, currencyToInUSD] = await Promise.all([
+                this.getValueInUSD(from),
+                this.getValueInUSD(to),
+            ]);
 
-        const convertedAmount = (currencyFromInUSD / currencyToInUSD) * amount;
+            const convertedAmount =
+                (currencyFromInUSD / currencyToInUSD) * amount;
 
-        return {
-            from,
-            to,
-            amount,
-            convertedAmount: convertedAmount,
-            exchangeRate: currencyFromInUSD / currencyToInUSD,
-        };
+            return {
+                from,
+                to,
+                amount,
+                convertedAmount: convertedAmount,
+                exchangeRate: currencyFromInUSD / currencyToInUSD,
+            };
+        } catch (error) {
+            console.error(error);
+            throw new NotAcceptableException(
+                'Could not accept this conversion',
+            );
+        }
     }
 
     async create(addCurrencyDto: CreateCurrencyDto): Promise<string> {
@@ -134,7 +140,6 @@ export class CurrencyService {
         if (await this.isCurrencySupported(currency, true))
             throw new ConflictException('Currency already supported');
 
-        console.error('DPS DO 1 IF');
         isFictional = await this.isFictionalCurrency(currency);
 
         if (!isFictional)
@@ -151,11 +156,11 @@ export class CurrencyService {
         return `${currency} was added successfully`;
     }
 
-    async remove(currencyCode: string): Promise<string> {
+    async remove(currencyCode: string) {
         await this.validateCurrency(currencyCode);
         await this.currencyRepository.delete({ code: currencyCode });
 
-        return `${currencyCode} deleted successfully`;
+        return { message: `${currencyCode} deleted successfully` };
     }
 
     async findAllCurrencies() {
@@ -173,8 +178,6 @@ export class CurrencyService {
         const currency = await this.currencyRepository.findOne({
             where: { code: currencyCode },
         });
-
-        console.error(`find one :: ${currency?.code}`);
 
         if (!currency && !isAddMethod)
             throw new NotFoundException(

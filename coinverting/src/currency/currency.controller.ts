@@ -27,8 +27,8 @@ export class CurrencyController {
     }
 
     @Get('find')
-    findOne(@Body() body: { currency: string }) {
-        return this.currencyService.findOneCurrency(body.currency);
+    findOne(@Query('currency') currency: string) {
+        return this.currencyService.findOneCurrency(currency);
     }
 
     @Delete('delete')
