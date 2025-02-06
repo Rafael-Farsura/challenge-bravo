@@ -88,6 +88,24 @@ export class CurrencyService {
             `The currency ${currencyCode} is not valid`,
         );
     }
+
+    async convert(convertCurrencyDto: ConvertCurrencyDto) {
+        const { from, to, amount } = convertCurrencyDto;
+
+        const [currencyFromInUSD, currencyToInUSD] = await Promise.all([
+            this.getValueInUSD(from),
+            this.getValueInUSD(to),
+        ]);
+
+        const convertedAmount = (currencyFromInUSD / currencyToInUSD) * amount;
+
+        return {
+            from,
+            to,
+            amount,
+            convertedAmount: convertedAmount,
+            exchangeRate: currencyFromInUSD / currencyToInUSD,
+        };
     }
 
     async initializeSupportedCurrencies() {

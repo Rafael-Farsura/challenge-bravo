@@ -15,9 +15,16 @@ import { ConvertCurrencyDto } from './dto/convert-currency.dto';
 export class CurrencyController {
     constructor(private readonly currencyService: CurrencyService) {}
 
-    @Post()
-    create(@Body() createCurrencyDto: CreateCurrencyDto) {
-        return this.currencyService.create(createCurrencyDto);
+    @Get('convert')
+    async convert(@Query() query: ConvertCurrencyDto) {
+        try {
+            const result = await this.currencyService.convert(query);
+
+            return result;
+        } catch (error) {
+            console.error(error);
+            throw new BadRequestException('Error converting currency');
+        }
     }
 
     @Get()

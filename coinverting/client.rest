@@ -1,0 +1,6 @@
+#### Currency Controller
+@baseURL = http://localhost:3000
+
+### @name Convert
+GET {{baseURL}}/currency/convert?from=BRL&to=USD&amount=100
+Accept: application/json
