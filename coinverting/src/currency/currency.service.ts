@@ -43,12 +43,51 @@ export class CurrencyService {
         }
     }
 
-    update(id: number, convertCurrencyDto: ConvertCurrencyDto) {
-        return `This action updates a #${id} currency`;
+    private async getValueInUSD(currencyCode: string): Promise<number> {
+        await this.validateCurrency(currencyCode);
+
+        if (currencyCode === 'USD') return 1;
+
+        let currency = await this.currencyRepository.findOne({
+            where: { code: currencyCode },
+        });
+
+        if (!currency) {
+            const realCurrencyInUSD =
+                await this.fetchExchangeRate(currencyCode);
+
+            if (!realCurrencyInUSD)
+                throw new BadRequestException(
+                    `'Currency : ${currencyCode} not found'`,
+                );
+
+            currency = this.currencyRepository.create({
+                code: currencyCode,
+                exchangeRateToUSD: realCurrencyInUSD,
+                isFictional: false,
+            });
+
+            await this.currencyRepository.save(currency);
+        }
+
+        return currency.exchangeRateToUSD;
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} currency`;
+    private async isCurrencySupported(currencyCode: string): Promise<boolean> {
+        return (await this.currencyRepository.findOneOrFail({
+            where: { code: currencyCode },
+        }))
+            ? true
+            : false;
+    }
+
+    private async validateCurrency(currencyCode: string): Promise<boolean> {
+        if (await this.isCurrencySupported(currencyCode)) return true;
+
+        throw new BadRequestException(
+            `The currency ${currencyCode} is not valid`,
+        );
+    }
     }
 
     async initializeSupportedCurrencies() {
