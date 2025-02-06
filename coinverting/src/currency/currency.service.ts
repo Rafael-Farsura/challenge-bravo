@@ -89,6 +89,14 @@ export class CurrencyService {
         );
     }
 
+    private async isFictionalCurrency(currencyCode: string): Promise<boolean> {
+        const currencyInUSD = await this.fetchExchangeRate(currencyCode);
+
+        if (!currencyInUSD) return true;
+
+        return false;
+    }
+
     async convert(convertCurrencyDto: ConvertCurrencyDto) {
         const { from, to, amount } = convertCurrencyDto;
 
@@ -107,6 +115,39 @@ export class CurrencyService {
             exchangeRate: currencyFromInUSD / currencyToInUSD,
         };
     }
+
+    async create(addCurrencyDto: CreateCurrencyDto): Promise<string> {
+        const currency = addCurrencyDto.currency;
+        let isFictional = addCurrencyDto.isFictional;
+        let exchangeRateToUSD = addCurrencyDto.exchangeRateToUSD;
+        if (
+            await this.currencyRepository.findOne({
+                where: {
+                    code: currency,
+                },
+            })
+        )
+            throw new BadRequestException('Currency already supported');
+
+        isFictional = await this.isFictionalCurrency(currency);
+        console.log(isFictional, 'isFictional');
+
+        if (!isFictional)
+            exchangeRateToUSD = await this.fetchExchangeRate(currency);
+
+        const currencyEntity: Currency = this.currencyRepository.create({
+            code: currency,
+            exchangeRateToUSD: exchangeRateToUSD,
+            isFictional: isFictional,
+        });
+
+        await this.validateCurrency(currencyEntity.code);
+
+        await this.currencyRepository.save(currencyEntity);
+
+        return `${currency} was added successfully`;
+    }
+
 
     async initializeSupportedCurrencies() {
         for (const currency of this.supportedCurrencies) {

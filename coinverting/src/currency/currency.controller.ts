@@ -1,15 +1,8 @@
-import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Patch,
-    Param,
-    Delete,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, Query } from '@nestjs/common';
 import { CurrencyService } from './currency.service';
 import { CreateCurrencyDto } from './dto/create-currency.dto';
 import { ConvertCurrencyDto } from './dto/convert-currency.dto';
+import { BadRequestException } from '@nestjs/common';
 
 @Controller('currency')
 export class CurrencyController {
@@ -27,7 +20,17 @@ export class CurrencyController {
         }
     }
 
-    @Get()
+    @Post('add')
+    async create(@Body() body: CreateCurrencyDto) {
+        try {
+            await this.currencyService.create(body);
+            return { message: `${body.currency} added successfully` };
+        } catch (error) {
+            console.error(error);
+            throw new BadRequestException(`Error adding currency`);
+        }
+    }
+
     findAll() {
         return this.currencyService.findAll();
     }
