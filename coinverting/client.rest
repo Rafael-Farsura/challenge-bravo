@@ -1,6 +1,40 @@
 #### Currency Controller
 @baseURL = http://localhost:3000
 
+
+### @name findAllCurrencies
+GET {{baseURL}}/currency/
+Accept: application/application/json
+
+### @name AddCurrency
+GET {{baseURL}}/currency/find
+Content-Type: application/json
+
+{
+  "currency": "BBB"
+}
+
+
 ### @name Convert
-GET {{baseURL}}/currency/convert?from=BRL&to=USD&amount=100
+GET {{baseURL}}/currency/convert?from=BTC&to=USD&amount=1
 Accept: application/json
+
+
+### @name AddCurrency
+POST {{baseURL}}/currency/add
+Content-Type: application/json
+
+{
+  "currency": "BBB",
+  "exchangeRateToUSD": 2,
+  "isFictional": true
+}
+
+
+### @name DeleteCurrency
+DELETE {{baseURL}}/currency/delete
+Content-Type: application/json
+
+{
+  "currency": "BBB"
+}

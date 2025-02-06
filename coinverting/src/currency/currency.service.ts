@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+    ConflictException,
+    Injectable,
+    NotAcceptableException,
+    NotFoundException,
+} from '@nestjs/common';
 
 import axios from 'axios';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,6 +17,7 @@ interface ExchangeRateResponse {
         ask: number;
     };
 }
+
 @Injectable()
 export class CurrencyService {
     private readonly baseApiUrl =
@@ -48,17 +54,16 @@ export class CurrencyService {
 
         if (currencyCode === 'USD') return 1;
 
-        let currency = await this.currencyRepository.findOne({
-            where: { code: currencyCode },
-        });
+        let currency: Currency | null =
+            await this.findOneCurrency(currencyCode);
 
         if (!currency) {
             const realCurrencyInUSD =
                 await this.fetchExchangeRate(currencyCode);
 
             if (!realCurrencyInUSD)
-                throw new BadRequestException(
-                    `'Currency : ${currencyCode} not found'`,
+                throw new NotFoundException(
+                    `Currency : ${currencyCode} not found`,
                 );
 
             currency = this.currencyRepository.create({
@@ -73,18 +78,23 @@ export class CurrencyService {
         return currency.exchangeRateToUSD;
     }
 
-    private async isCurrencySupported(currencyCode: string): Promise<boolean> {
-        return (await this.currencyRepository.findOneOrFail({
-            where: { code: currencyCode },
-        }))
-            ? true
-            : false;
+    private async isCurrencySupported(
+        currencyCode: string,
+        isAddMethod?: boolean,
+    ): Promise<boolean> {
+        console.error(currencyCode);
+
+        return Promise.resolve(
+            (await this.findOneCurrency(currencyCode, isAddMethod))
+                ? true
+                : false,
+        );
     }
 
     private async validateCurrency(currencyCode: string): Promise<boolean> {
         if (await this.isCurrencySupported(currencyCode)) return true;
 
-        throw new BadRequestException(
+        throw new NotAcceptableException(
             `The currency ${currencyCode} is not valid`,
         );
     }
@@ -120,17 +130,12 @@ export class CurrencyService {
         const currency = addCurrencyDto.currency;
         let isFictional = addCurrencyDto.isFictional;
         let exchangeRateToUSD = addCurrencyDto.exchangeRateToUSD;
-        if (
-            await this.currencyRepository.findOne({
-                where: {
-                    code: currency,
-                },
-            })
-        )
-            throw new BadRequestException('Currency already supported');
 
+        if (await this.isCurrencySupported(currency, true))
+            throw new ConflictException('Currency already supported');
+
+        console.error('DPS DO 1 IF');
         isFictional = await this.isFictionalCurrency(currency);
-        console.log(isFictional, 'isFictional');
 
         if (!isFictional)
             exchangeRateToUSD = await this.fetchExchangeRate(currency);
@@ -141,13 +146,43 @@ export class CurrencyService {
             isFictional: isFictional,
         });
 
-        await this.validateCurrency(currencyEntity.code);
-
         await this.currencyRepository.save(currencyEntity);
 
         return `${currency} was added successfully`;
     }
 
+    async remove(currencyCode: string): Promise<string> {
+        await this.validateCurrency(currencyCode);
+        await this.currencyRepository.delete({ code: currencyCode });
+
+        return `${currencyCode} deleted successfully`;
+    }
+
+    async findAllCurrencies() {
+        const currencies = await this.currencyRepository.find();
+
+        if (!currencies) throw new NotFoundException('No currencies found');
+
+        return currencies;
+    }
+
+    async findOneCurrency(
+        currencyCode: string,
+        isAddMethod?: boolean,
+    ): Promise<Currency | null> {
+        const currency = await this.currencyRepository.findOne({
+            where: { code: currencyCode },
+        });
+
+        console.error(`find one :: ${currency?.code}`);
+
+        if (!currency && !isAddMethod)
+            throw new NotFoundException(
+                `Could not find currency : ${currencyCode}`,
+            );
+
+        return currency;
+    }
 
     async initializeSupportedCurrencies() {
         for (const currency of this.supportedCurrencies) {
