@@ -1,22 +1,22 @@
 import {
-    IsBoolean,
-    IsNotEmpty,
-    IsNumber,
-    IsPositive,
-    IsString,
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsPositive,
+  IsString,
 } from 'class-validator';
 
 export class CreateCurrencyDto {
-    @IsNotEmpty()
-    @IsString()
-    currency: string;
+  @IsNotEmpty()
+  @IsString()
+  currency: string;
 
-    @IsNotEmpty()
-    @IsNumber()
-    @IsPositive()
-    exchangeRateToUSD: number;
+  @IsNotEmpty()
+  @IsNumber()
+  @IsPositive()
+  exchangeRateToUSD: number;
 
-    @IsBoolean()
-    @IsNotEmpty()
-    isFictional: boolean;
+  @IsBoolean()
+  @IsNotEmpty()
+  isFictional: boolean;
 }

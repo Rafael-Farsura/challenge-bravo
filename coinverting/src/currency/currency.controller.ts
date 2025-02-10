@@ -5,36 +5,36 @@ import { ConvertCurrencyDto } from './dto/convert-currency.dto';
 
 @Controller('currency')
 export class CurrencyController {
-    constructor(private readonly currencyService: CurrencyService) {}
+  constructor(private readonly currencyService: CurrencyService) {}
 
-    @Get('convert')
-    async convert(@Query() query: ConvertCurrencyDto) {
-        const result = await this.currencyService.convert(query);
+  @Get('convert')
+  async convert(@Query() query: ConvertCurrencyDto) {
+    const result = await this.currencyService.convert(query);
 
-        return result;
-    }
+    return result;
+  }
 
-    @Post('add')
-    async create(@Body() body: CreateCurrencyDto) {
-        await this.currencyService.create(body);
+  @Post('add')
+  async create(@Body() body: CreateCurrencyDto) {
+    await this.currencyService.create(body);
 
-        return { message: `${body.currency} added successfully` };
-    }
+    return { message: `${body.currency} added successfully` };
+  }
 
-    @Get('')
-    findAll() {
-        return this.currencyService.findAllCurrencies();
-    }
+  @Get('')
+  findAll() {
+    return this.currencyService.findAllCurrencies();
+  }
 
-    @Get('find')
-    findOne(@Query('currency') currency: string) {
-        return this.currencyService.findOneCurrency(currency);
-    }
+  @Get('find')
+  findOne(@Query('currency') currency: string) {
+    return this.currencyService.findOneCurrency(currency);
+  }
 
-    @Delete('delete')
-    async remove(@Body() body: { currency: string }) {
-        await this.currencyService.remove(body.currency);
+  @Delete('delete')
+  async remove(@Body() body: { currency: string }) {
+    await this.currencyService.remove(body.currency);
 
-        return `The currency ${body.currency} has been deleted`;
-    }
+    return `The currency ${body.currency} has been deleted`;
+  }
 }

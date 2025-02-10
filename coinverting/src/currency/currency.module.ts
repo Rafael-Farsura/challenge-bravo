@@ -5,9 +5,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Currency } from './entities/currency.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Currency])],
-    controllers: [CurrencyController],
-    providers: [CurrencyService],
-    exports: [CurrencyService],
+  imports: [TypeOrmModule.forFeature([Currency])],
+  controllers: [CurrencyController],
+  providers: [CurrencyService],
+  exports: [CurrencyService],
 })
 export class CurrencyModule {}
