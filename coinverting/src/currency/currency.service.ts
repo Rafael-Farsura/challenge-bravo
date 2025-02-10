@@ -1,16 +1,22 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   NotAcceptableException,
   NotFoundException,
 } from '@nestjs/common';
 
 import axios from 'axios';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Currency } from './entities/currency.entity';
+
 import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { Currency } from './entities/currency.entity';
 import { CreateCurrencyDto } from './dto/create-currency.dto';
 import { ConvertCurrencyDto } from './dto/convert-currency.dto';
+
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 interface ExchangeRateResponse {
   [key: string]: {
@@ -27,6 +33,8 @@ export class CurrencyService {
   constructor(
     @InjectRepository(Currency)
     private currencyRepository: Repository<Currency>,
+
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async onModuleInit() {
@@ -53,6 +61,11 @@ export class CurrencyService {
 
     if (currencyCode === 'USD') return 1;
 
+    const cacheKey = `currency_usd_rate:${currencyCode}`;
+    const cachedRate = await this.cacheManager.get(cacheKey);
+
+    if (cachedRate) return cachedRate as number;
+
     let currency: Currency | null = await this.findOneCurrency(currencyCode);
 
     if (!currency) {
@@ -69,6 +82,8 @@ export class CurrencyService {
 
       await this.currencyRepository.save(currency);
     }
+
+    await this.cacheManager.set(cacheKey, currency.exchangeRateToUSD, 3600);
 
     return currency.exchangeRateToUSD;
   }
